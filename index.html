@@ -1,0 +1,1299 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Chat App</title>
+    <!-- Font Awesome for icons (for the close button) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        /* Base styles from previous version */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .chat-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            max-width: 400px;
+            margin: 0 auto;
+            background: white;
+            box-shadow: 0 0 30px rgba(0,0,0,0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .chat-header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .chat-header h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .status {
+            font-size: 0.8rem;
+            opacity: 0.9;
+            margin-top: 5px;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background: #f8f9fa;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            animation: fadeInUp 0.3s ease;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.user {
+            text-align: right;
+        }
+
+        .message.ai {
+            text-align: left;
+        }
+
+        .message-bubble {
+            display: inline-block;
+            max-width: 80%;
+            padding: 12px 16px;
+            border-radius: 18px;
+            font-size: 0.9rem;
+            line-height: 1.4;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            word-wrap: break-word;
+        }
+
+        .message.user .message-bubble {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .message.ai .message-bubble {
+            background: white;
+            color: #333;
+            border: 1px solid #e1e8ed;
+        }
+
+        .message-time {
+            font-size: 0.7rem;
+            opacity: 0.6;
+            margin-top: 5px;
+        }
+
+        .typing-indicator {
+            display: none;
+            text-align: left;
+            margin-bottom: 15px;
+        }
+
+        .typing-indicator.active {
+            display: block;
+        }
+
+        .typing-dots {
+            display: inline-block;
+            background: white;
+            padding: 12px 16px;
+            border-radius: 18px;
+            border: 1px solid #e1e8ed;
+        }
+
+        .typing-dots span {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #999;
+            margin: 0 2px;
+            animation: typing 1.4s infinite;
+        }
+
+        .typing-dots span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-dots span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typing {
+            0%, 60%, 100% {
+                transform: translateY(0);
+            }
+            30% {
+                transform: translateY(-10px);
+            }
+        }
+
+        .chat-input-container {
+            padding: 20px;
+            background: white;
+            border-top: 1px solid #e1e8ed;
+            position: relative;
+        }
+
+        .input-wrapper {
+            display: flex;
+            align-items: center;
+            background: #f1f3f4;
+            border-radius: 25px;
+            padding: 8px;
+            position: relative;
+        }
+
+        .add-button {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            border: none;
+            border-radius: 50%;
+            width: 35px;
+            height: 35px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-right: 10px;
+            color: white;
+            font-size: 18px;
+        }
+
+        .add-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 12px rgba(79, 172, 254, 0.4);
+        }
+
+        .chat-input {
+            flex: 1;
+            border: none;
+            outline: none;
+            background: transparent;
+            padding: 8px 12px;
+            font-size: 1rem;
+            resize: none;
+            max-height: 100px;
+        }
+
+        .send-button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 50%;
+            width: 35px;
+            height: 35px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: white;
+        }
+
+        .send-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .send-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .options-menu {
+            position: absolute;
+            bottom: 80px;
+            left: 20px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+            display: none;
+            z-index: 1000;
+            overflow: hidden;
+        }
+
+        .options-menu.active {
+            display: block;
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .option-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            cursor: pointer;
+            transition: background 0.2s ease;
+            border: none;
+            width: 100%;
+            text-align: left;
+            background: white;
+            font-size: 0.9rem;
+        }
+
+        .option-item:hover {
+            background: #f1f3f4;
+        }
+
+        .option-item .icon {
+            width: 20px;
+            height: 20px;
+            margin-right: 12px;
+            font-size: 1.1rem;
+        }
+
+        .media-preview {
+            margin-top: 10px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            display: none;
+        }
+
+        .media-preview.active {
+            display: block;
+        }
+
+        .preview-image, .preview-video {
+            max-width: 100%;
+            max-height: 150px;
+            border-radius: 8px;
+        }
+
+        .recording-indicator {
+            display: none;
+            align-items: center;
+            padding: 10px;
+            background: #ff4757;
+            color: white;
+            border-radius: 20px;
+            margin-top: 10px;
+        }
+
+        .recording-indicator.active {
+            display: flex;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .voice-wave {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+            margin-left: 10px;
+        }
+
+        .wave-bar {
+            width: 3px;
+            height: 15px;
+            background: white;
+            border-radius: 2px;
+            animation: wave 1s infinite;
+        }
+
+        .wave-bar:nth-child(2) { animation-delay: 0.1s; }
+        .wave-bar:nth-child(3) { animation-delay: 0.2s; }
+        .wave-bar:nth-child(4) { animation-delay: 0.3s; }
+
+        @keyframes wave {
+            0%, 100% { height: 15px; }
+            50% { height: 5px; }
+        }
+
+        /* --- New styles for Home/Main Menu Modal --- */
+        .home-button {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.8rem;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 5px;
+            transition: background 0.3s ease;
+            z-index: 1;
+        }
+        .home-button:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .main-menu-modal {
+            display: flex; /* Changed from 'none' to 'flex' for centering */
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 2000;
+            justify-content: center; /* Center horizontally */
+            align-items: center; /* Center vertically */
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+            backdrop-filter: blur(5px); /* Optional: blur background */
+        }
+        .main-menu-modal.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+            width: 90%;
+            max-width: 350px;
+            position: relative;
+            transform: scale(0.9); /* Start slightly smaller */
+            transition: transform 0.3s ease;
+        }
+        .main-menu-modal.active .modal-content {
+            transform: scale(1); /* Scale to normal size when active */
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: #888;
+            cursor: pointer;
+            transition: color 0.2s ease;
+        }
+        .close-btn:hover {
+            color: #333;
+        }
+
+        .modal-menu-title {
+            font-size: 1.5rem;
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .modal-menu-items {
+            display: flex;
+            flex-direction: column;
+            gap: 10px; /* Space between items */
+        }
+
+        .modal-menu-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            background: #f8f9fa; /* Light background for items */
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background 0.2s ease, transform 0.2s ease;
+            font-size: 1rem;
+            color: #333;
+            text-align: left; /* Ensure text aligns left */
+            border: none; /* Remove default button border */
+            width: 100%; /* Make button fill parent width */
+        }
+
+        .modal-menu-item:hover {
+            background: #e9ecef;
+            transform: translateY(-2px); /* Slight lift effect */
+        }
+
+        .modal-menu-item .icon {
+            margin-right: 15px;
+            font-size: 1.2rem;
+            color: #667eea; /* Accent color for icons */
+        }
+
+        /* History Modal (unchanged from previous version, kept for completeness) */
+        .history-modal {
+            display: none;
+            position: fixed;
+            z-index: 2001;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(5px);
+        }
+
+        .history-modal-content {
+            background-color: #fefefe;
+            margin: auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 90%;
+            max-width: 500px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
+            max-height: 80%;
+            overflow-y: auto;
+        }
+
+        .history-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+            margin-bottom: 15px;
+        }
+
+        .history-modal-header h3 {
+            margin: 0;
+            color: #333;
+        }
+
+        .history-modal-close {
+            color: #aaa;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .history-modal-close:hover,
+        .history-modal-close:focus {
+            color: #000;
+            text-decoration: none;
+        }
+
+        .history-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            flex: 1;
+        }
+
+        .history-item {
+            background-color: #f9f9f9;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            padding: 10px 15px;
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+            color: #555;
+        }
+        .history-item.user-message {
+            background-color: #e6f7ff;
+            text-align: right;
+        }
+        .history-item.ai-message {
+            background-color: #f0f0f0;
+            text-align: left;
+        }
+        .history-item strong {
+            color: #007bff;
+        }
+
+        .history-actions {
+            margin-top: 15px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .history-actions button {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background 0.2s ease;
+        }
+        .history-actions button.clear {
+            background-color: #dc3545;
+            color: white;
+        }
+        .history-actions button.clear:hover {
+            background-color: #c82333;
+        }
+        .history-actions button.close-modal {
+            background-color: #007bff;
+            color: white;
+        }
+        .history-actions button.close-modal:hover {
+            background-color: #0056b3;
+        }
+
+        /* Mobile responsive */
+        @media (max-width: 480px) {
+            .chat-container {
+                max-width: 100%;
+                height: 100vh;
+            }
+            .modal-content {
+                width: 95%; /* Make modal a bit wider on small screens */
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            <button class="home-button" onclick="toggleMainMenuModal()">☰</button>
+            <h1>YADAV Sir AI सहायक प्रो</h1>
+             </div>
+
+      
+ <div class="chat-messages" id="chatMessages">
+            <div class="message ai">
+                <div class="message-bubble">
+                    नमस्ते! मैं आपकी कैसे सहिता कर सकता हूँ।अपना Doubt क्लियर करे, आप मुझसे कुछ भी पूछ सकते हैं जैसे की गणित, रिजनिंग,All gk quiz, आपके हर  Doubt  क्लियर करने की कोसिस करूँगा,,या + बटन दबाकर photo, audio या अन्य options का उपयोग कर सकते हैं।
+  </div>
+           <div class="message-time"> Online... </div>
+            </div>
+        </div>
+
+        <div class="typing-indicator" id="typingIndicator">
+            <div class="typing-dots">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+
+        <div class="options-menu" id="optionsMenu">
+            <button class="option-item" onclick="openCamera()">
+                <span class="icon">📷</span>
+                Camera
+            </button>
+            <button class="option-item" onclick="selectPhoto()">
+                <span class="icon">🖼️</span>
+                Photo Gallery
+            </button>
+            <button class="option-item" onclick="selectVideo()">
+                <span class="icon">🎥</span>
+                Video
+            </button>
+            <button class="option-item" onclick="toggleRecording()">
+                <span class="icon">🎤</span>
+                Voice Record
+            </button>
+            <button class="option-item" onclick="selectDocument()">
+                <span class="icon">📄</span>
+                Document
+            </button>
+            <button class="option-item" onclick="shareLocation()">
+                <span class="icon">📍</span>
+                Location
+            </button>
+            <button class="option-item" onclick="selectContact()">
+                <span class="icon">👤</span>
+                Contact
+            </button>
+            <button class="option-item" onclick="selectAudio()">
+                <span class="icon">🎵</span>
+                Audio File
+            </button>
+        </div>
+
+        <div class="recording-indicator" id="recordingIndicator">
+            <span>🔴 Recording...</span>
+            <div class="voice-wave">
+                <div class="wave-bar"></div>
+                <div class="wave-bar"></div>
+                <div class="wave-bar"></div>
+                <div class="wave-bar"></div>
+            </div>
+        </div>
+
+        <div class="media-preview" id="mediaPreview">
+            <div id="previewContent"></div>
+            <button onclick="clearPreview()" style="margin-top: 10px; padding: 5px 10px; background: #ff4757; color: white; border: none; border-radius: 5px; cursor: pointer;">Remove</button>
+        </div>
+
+        <div class="chat-input-container">
+            <div class="input-wrapper">
+                <button class="add-button" onclick="toggleOptions()">+</button>
+                <textarea 
+                    class="chat-input" 
+                    id="chatInput" 
+                    placeholder="Type your message..." 
+                    rows="1"
+                    onkeypress="handleKeyPress(event)"
+                    oninput="autoResize(this)"
+                ></textarea>
+                <button class="send-button" onclick="sendMessage()" id="sendButton">
+                    ➤
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden file inputs -->
+    <input type="file" id="photoInput" accept="image/*" class="hidden" onchange="handlePhotoSelect(event)">
+    <input type="file" id="videoInput" accept="video/*" class="hidden" onchange="handleVideoSelect(event)">
+    <input type="file" id="documentInput" accept=".pdf,.doc,.docx,.txt" class="hidden" onchange="handleDocumentSelect(event)">
+    <input type="file" id="audioInput" accept="audio/*" class="hidden" onchange="handleAudioSelect(event)">
+
+    <!-- Main Menu Modal Structure (New) -->
+    <div class="main-menu-modal" id="mainMenuModal">
+        <div class="modal-content">
+            <button class="close-btn" id="closeMainMenuBtn" onclick="toggleMainMenuModal()">
+                <i class="fas fa-times"></i>
+            </button>
+            <h2 class="modal-menu-title">AI Chat Menu</h2>
+            <div class="modal-menu-items">
+                <button class="modal-menu-item" onclick="showHistory()">
+                    <span class="icon">📜</span>
+                    History
+                </button>
+                <button class="modal-menu-item" onclick="shareApp()">
+                    <span class="icon">🔗</span>
+                    Share App
+                </button>
+                <button class="modal-menu-item" onclick="downloadApp()">
+                    <span class="icon">⬇️</span>
+                    Download App
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- History Modal Structure (unchanged) -->
+    <div id="historyModal" class="history-modal">
+        <div class="history-modal-content">
+            <div class="history-modal-header">
+                <h3>Chat History</h3>
+                <span class="history-modal-close" onclick="closeHistoryModal()">×</span>
+            </div>
+            <ul class="history-list" id="historyList">
+                <!-- History items will be loaded here -->
+            </ul>
+            <div class="history-actions">
+                <button class="clear" onclick="clearHistory()">Clear History</button>
+                <button class="close-modal" onclick="closeHistoryModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        let mediaRecorder;
+        let recordedChunks = [];
+        let isRecording = false;
+        let currentMediaFile = null;
+        let chatHistory = []; // Array to store chat messages
+
+        // Gemini AI API Configuration (Use your actual key if deploying)
+        const GEMINI_API_KEY = 'AIzaSyDHy9J04dI8LdK1ijNJMrRXubJ5ucx9rdk'; // Replaced with your actual Gemini API Key
+        const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
+        
+        // Load history from localStorage on startup
+        document.addEventListener('DOMContentLoaded', (event) => {
+            loadChatHistoryFromLocalStorage();
+        });
+
+        // AI Response function
+        async function getAIResponse(userMessage) {
+            try {
+                // If API key is not set, provide a dummy response
+                if (GEMINI_API_KEY === 'YOUR_GEMINI_API_KEY' || !GEMINI_API_KEY) {
+                    console.warn("Warning: GEMINI_API_KEY is not set. Using a dummy AI response.");
+                    return new Promise(resolve => {
+                        setTimeout(() => {
+                            resolve(`नमस्ते! मैं एक AI असिस्टेंट हूँ। आपने मुझसे पूछा: "${userMessage}"। मैं अभी एक dummy जवाब दे रहा हूँ क्योंकि Gemini API Key सेट नहीं है। कृपया अपनी API Key जोड़ें।`);
+                        }, 1500); // Simulate network delay
+                    });
+                }
+
+                const response = await fetch(GEMINI_API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        contents: [
+                            {
+                                parts: [
+                                    {
+                                        text: userMessage
+                                    }
+                                ]
+                            }
+                        ],
+                        generationConfig: {
+                            temperature: 0.7,
+                            topK: 40,
+                            topP: 0.95,
+                            maxOutputTokens: 2048,
+                        }
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(`API Error: ${response.status} - ${errorData.error ? errorData.error.message : 'Unknown error'}`);
+                }
+
+                const data = await response.json();
+                
+                if (data.candidates && data.candidates[0] && data.candidates[0].content) {
+                    return data.candidates[0].content.parts[0].text;
+                } else {
+                    throw new Error('Invalid API response format or no content in response.');
+                }
+            } catch (error) {
+                console.error('AI API Error:', error);
+                return `Sorry, मैं अभी response नहीं दे सकता। Error: ${error.message}`;
+            }
+        }
+
+        // Auto resize textarea
+        function autoResize(textarea) {
+            textarea.style.height = 'auto';
+            textarea.style.height = textarea.scrollHeight + 'px';
+        }
+
+        // Toggle options menu (for media attachments)
+        function toggleOptions() {
+            const menu = document.getElementById('optionsMenu');
+            menu.classList.toggle('active');
+        }
+
+        // Handle key press
+        function handleKeyPress(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendMessage();
+            }
+        }
+
+        // Send message
+        async function sendMessage() {
+            const input = document.getElementById('chatInput');
+            const message = input.value.trim();
+            
+            if (!message && !currentMediaFile) return;
+
+            let userText = message;
+            
+            // Add user message
+            if (message) {
+                addMessage('user', message);
+            }
+
+            // Add media if present
+            if (currentMediaFile) {
+                addMediaMessage('user', currentMediaFile);
+                if (currentMediaFile.type === 'image') {
+                    userText += " [User sent an image]";
+                } else if (currentMediaFile.type === 'video') {
+                    userText += " [User sent a video]";
+                } else if (currentMediaFile.type === 'audio') {
+                    userText += " [User sent an audio file]";
+                } else if (currentMediaFile.type === 'document') {
+                    userText += ` [User sent a document: ${currentMediaFile.name}]`;
+                }
+                currentMediaFile = null;
+                clearPreview();
+            }
+
+            input.value = '';
+            input.style.height = 'auto';
+            document.getElementById('optionsMenu').classList.remove('active');
+
+            // Show typing indicator
+            showTypingIndicator();
+
+            // Get real AI response
+            if (userText.trim()) {
+                try {
+                    const aiResponse = await getAIResponse(userText);
+                    hideTypingIndicator();
+                    addMessage('ai', aiResponse);
+                } catch (error) {
+                    hideTypingIndicator();
+                    addMessage('ai', 'Sorry, मुझे कुछ technical problem हो रही है। कृपया फिर से try करें।');
+                }
+            } else {
+                hideTypingIndicator();
+                // This case happens if only media was sent without text.
+                // The AI might still process it based on the placeholder text.
+                addMessage('ai', 'आपकी media file मिल गई! इसके बारे में कुछ और बताना चाहते हैं?');
+            }
+        }
+
+        // Add message to chat and save to history
+        function addMessage(sender, text) {
+            const messagesContainer = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}`;
+            
+            const currentTime = new Date().toLocaleTimeString('hi-IN', {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+
+            messageDiv.innerHTML = `
+                <div class="message-bubble">${text}</div>
+                <div class="message-time">${currentTime}</div>
+            `;
+
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+            // Save to history
+            chatHistory.push({ sender, text, time: currentTime, type: 'text' });
+            saveChatHistoryToLocalStorage();
+        }
+
+        // Add media message
+        function addMediaMessage(sender, mediaData) {
+            const messagesContainer = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}`;
+            
+            const currentTime = new Date().toLocaleTimeString('hi-IN', {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+
+            let mediaContent = '';
+            let historyText = ''; // Text for history entry
+            if (mediaData.type === 'image') {
+                mediaContent = `<img src="${mediaData.url}" style="max-width: 200px; border-radius: 10px;">`;
+                historyText = `[Image: ${mediaData.url.substring(0, 30)}...]`;
+            } else if (mediaData.type === 'video') {
+                mediaContent = `<video controls style="max-width: 200px; border-radius: 10px;"><source src="${mediaData.url}"></video>`;
+                historyText = `[Video: ${mediaData.url.substring(0, 30)}...]`;
+            } else if (mediaData.type === 'audio') {
+                mediaContent = `<audio controls><source src="${mediaData.url}"></audio>`;
+                historyText = `[Audio: ${mediaData.url.substring(0, 30)}...]`;
+            } else if (mediaData.type === 'document') {
+                mediaContent = `<div>📄 ${mediaData.name}</div>`;
+                historyText = `[Document: ${mediaData.name}]`;
+            }
+
+            messageDiv.innerHTML = `
+                <div class="message-bubble">${mediaContent}</div>
+                <div class="message-time">${currentTime}</div>
+            `;
+
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+            // Save media message to history
+            chatHistory.push({ sender, text: historyText, time: currentTime, type: mediaData.type, url: mediaData.url, name: mediaData.name });
+            saveChatHistoryToLocalStorage();
+        }
+
+        // Show/hide typing indicator
+        function showTypingIndicator() {
+            document.getElementById('typingIndicator').classList.add('active');
+            document.getElementById('chatMessages').scrollTop = document.getElementById('chatMessages').scrollHeight;
+        }
+
+        function hideTypingIndicator() {
+            document.getElementById('typingIndicator').classList.remove('active');
+        }
+
+        // Camera functions
+        function openCamera() {
+            navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } }) // 'user' for front camera
+                .then(stream => {
+                    const video = document.createElement('video');
+                    video.srcObject = stream;
+                    video.autoplay = true; // Auto-play video to see preview
+                    video.style.maxWidth = '100%';
+                    video.style.borderRadius = '10px';
+                    
+                    // Show a preview in the chat area
+                    const previewDiv = document.createElement('div');
+                    previewDiv.className = 'message user'; // Simulate user sending media
+                    previewDiv.innerHTML = `<div class="message-bubble">${video.outerHTML}<p style="margin-top:5px; font-size:0.8em;">Capturing in 3 seconds...</p></div>`;
+                    document.getElementById('chatMessages').appendChild(previewDiv);
+                    document.getElementById('chatMessages').scrollTop = document.getElementById('chatMessages').scrollHeight;
+
+                    // Take photo after a delay
+                    setTimeout(() => {
+                        const canvas = document.createElement('canvas');
+                        // Ensure video is playing and has dimensions before drawing
+                        if (video.videoWidth > 0 && video.videoHeight > 0) {
+                            canvas.width = video.videoWidth;
+                            canvas.height = video.videoHeight;
+                        } else {
+                            // Fallback dimensions if video dimensions are not ready
+                            canvas.width = 640;
+                            canvas.height = 480;
+                        }
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                        
+                        const dataURL = canvas.toDataURL('image/png');
+                        currentMediaFile = { type: 'image', url: dataURL };
+                        
+                        // Replace the preview with the captured image in the chat
+                        previewDiv.querySelector('.message-bubble').innerHTML = `<img src="${dataURL}" style="max-width: 200px; border-radius: 10px;">`;
+                        addMessage('ai', '✅ Photo captured! Press Send to share.'); // Inform user
+                        
+                        stream.getTracks().forEach(track => track.stop()); // Stop camera stream
+                    }, 3000); // 3 second delay
+                    
+                })
+                .catch(err => {
+                    console.error("Camera access error: ", err);
+                    addMessage('ai', 'Sorry, camera access denied. Please enable camera permissions or use photo gallery instead.');
+                });
+            
+            document.getElementById('optionsMenu').classList.remove('active');
+        }
+
+
+        function selectPhoto() {
+            document.getElementById('photoInput').click();
+            document.getElementById('optionsMenu').classList.remove('active');
+        }
+
+        function selectVideo() {
+            document.getElementById('videoInput').click();
+            document.getElementById('optionsMenu').classList.remove('active');
+        }
+
+        function selectDocument() {
+            document.getElementById('documentInput').click();
+            document.getElementById('optionsMenu').classList.remove('active');
+        }
+
+        function selectAudio() {
+            document.getElementById('audioInput').click();
+            document.getElementById('optionsMenu').classList.remove('active');
+        }
+
+        function selectContact() {
+            addMessage('ai', '👤 Contact sharing feature will be available soon!');
+            document.getElementById('optionsMenu').classList.remove('active');
+        }
+
+        // Handle file selections
+        function handlePhotoSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    currentMediaFile = { type: 'image', url: e.target.result };
+                    showPreview(e.target.result, 'image');
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function handleVideoSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    currentMediaFile = { type: 'video', url: e.target.result };
+                    showPreview(e.target.result, 'video');
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function handleDocumentSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                currentMediaFile = { type: 'document', name: file.name, file: file };
+                showPreview(file.name, 'document');
+            }
+        }
+
+        function handleAudioSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    currentMediaFile = { type: 'audio', url: e.target.result };
+                    showPreview(e.target.result, 'audio');
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        // Voice recording
+        function toggleRecording() {
+            if (!isRecording) {
+                startRecording();
+            } else {
+                stopRecording();
+            }
+            document.getElementById('optionsMenu').classList.remove('active');
+        }
+
+        function startRecording() {
+            navigator.mediaDevices.getUserMedia({ audio: true })
+                .then(stream => {
+                    mediaRecorder = new MediaRecorder(stream);
+                    recordedChunks = [];
+                    
+                    mediaRecorder.ondataavailable = function(event) {
+                        if (event.data.size > 0) {
+                            recordedChunks.push(event.data);
+                        }
+                    };
+
+                    mediaRecorder.onstop = function() {
+                        const blob = new Blob(recordedChunks, { type: 'audio/wav' }); // or 'audio/webm' based on browser support
+                        const audioURL = URL.createObjectURL(blob);
+                        currentMediaFile = { type: 'audio', url: audioURL };
+                        showPreview(audioURL, 'audio');
+                    };
+
+                    mediaRecorder.start();
+                    isRecording = true;
+                    document.getElementById('recordingIndicator').classList.add('active');
+                    addMessage('ai', '🎤 Recording started... Click the mic button again to stop.');
+                })
+                .catch(() => {
+                    addMessage('ai', 'Sorry, microphone access denied.');
+                });
+        }
+
+        function stopRecording() {
+            if (mediaRecorder && isRecording) {
+                mediaRecorder.stop();
+                mediaRecorder.stream.getTracks().forEach(track => track.stop());
+                isRecording = false;
+                document.getElementById('recordingIndicator').classList.remove('active');
+                addMessage('ai', '✅ Recording stopped! You can now send it.');
+            }
+        }
+
+        // Location sharing
+        function shareLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    function(position) {
+                        const lat = position.coords.latitude;
+                        const lon = position.coords.longitude;
+                        addMessage('user', `📍 Location: ${lat.toFixed(6)}, ${lon.toFixed(6)}`);
+                        addMessage('ai', 'Thank you for sharing your location! How can I help you with location-based services?');
+                    },
+                    function(error) {
+                        console.error("Geolocation error: ", error);
+                        addMessage('ai', 'Sorry, location access denied. Please enable location services in your browser settings.');
+                    }
+                );
+            } else {
+                addMessage('ai', 'Sorry, geolocation is not supported by this browser.');
+            }
+            document.getElementById('optionsMenu').classList.remove('active');
+        }
+
+        // Preview functions
+        function showPreview(src, type) {
+            const preview = document.getElementById('mediaPreview');
+            const content = document.getElementById('previewContent');
+            
+            let previewHTML = '';
+            if (type === 'image') {
+                previewHTML = `<img src="${src}" class="preview-image">`;
+            } else if (type === 'video') {
+                previewHTML = `<video src="${src}" class="preview-video" controls></video>`;
+            } else if (type === 'audio') {
+                previewHTML = `<audio src="${src}" controls></audio>`;
+            } else if (type === 'document') {
+                previewHTML = `<div>📄 ${src}</div>`;
+            }
+            
+            content.innerHTML = previewHTML;
+            preview.classList.add('active');
+        }
+
+        function clearPreview() {
+            document.getElementById('mediaPreview').classList.remove('active');
+            document.getElementById('previewContent').innerHTML = '';
+            currentMediaFile = null;
+        }
+
+        // Close options menu when clicking outside
+        document.addEventListener('click', function(event) {
+            const optionsMenu = document.getElementById('optionsMenu');
+            const addButton = document.querySelector('.add-button');
+            
+            if (optionsMenu.classList.contains('active') && !optionsMenu.contains(event.target) && event.target !== addButton) {
+                optionsMenu.classList.remove('active');
+            }
+
+            // Close main menu modal if clicking outside
+            const mainMenuModal = document.getElementById('mainMenuModal');
+            const modalContent = document.querySelector('.main-menu-modal .modal-content');
+            const homeButton = document.querySelector('.home-button');
+
+            if (mainMenuModal.classList.contains('active') && !modalContent.contains(event.target) && event.target !== homeButton) {
+                toggleMainMenuModal();
+            }
+        });
+
+        // --- New Main Menu Modal Functions ---
+
+        function toggleMainMenuModal() {
+            const mainMenuModal = document.getElementById('mainMenuModal');
+            mainMenuModal.classList.toggle('active');
+            
+            // Close media options menu if open
+            document.getElementById('optionsMenu').classList.remove('active');
+        }
+
+        function saveChatHistoryToLocalStorage() {
+            try {
+                localStorage.setItem('aiChatHistory', JSON.stringify(chatHistory));
+            } catch (e) {
+                console.error("Error saving chat history to localStorage: ", e);
+                // alert("Error saving chat history. Your browser's storage might be full.");
+            }
+        }
+
+        function loadChatHistoryFromLocalStorage() {
+            try {
+                const storedHistory = localStorage.getItem('aiChatHistory');
+                if (storedHistory) {
+                    chatHistory = JSON.parse(storedHistory);
+                } else {
+                    chatHistory = []; // Initialize if nothing found
+                }
+            } catch (e) {
+                console.error("Error loading chat history from localStorage: ", e);
+                chatHistory = []; // Reset if corrupted
+            }
+        }
+
+        function showHistory() {
+            const historyList = document.getElementById('historyList');
+            historyList.innerHTML = ''; // Clear previous history
+            
+            if (chatHistory.length === 0) {
+                historyList.innerHTML = '<li style="text-align: center; color: #777;">No chat history found.</li>';
+            } else {
+                chatHistory.forEach(msg => {
+                    const listItem = document.createElement('li');
+                    listItem.className = `history-item ${msg.sender}-message`;
+                    let content = `<strong>${msg.sender === 'user' ? 'You' : 'AI'}:</strong> `;
+                    if (msg.type === 'text') {
+                        content += msg.text;
+                    } else if (msg.type === 'image' || msg.type === 'video' || msg.type === 'audio') {
+                        content += `[${msg.type.charAt(0).toUpperCase() + msg.type.slice(1)} File]`; // E.g., [Image File]
+                    } else if (msg.type === 'document') {
+                        content += `[Document: ${msg.name || 'file'}]`;
+                    }
+                    listItem.innerHTML = `${content} <span style="font-size: 0.7em; opacity: 0.7; float: right;">${msg.time}</span>`;
+                    historyList.appendChild(listItem);
+                });
+            }
+            
+            document.getElementById('historyModal').style.display = 'flex'; // Show modal
+            toggleMainMenuModal(); // Close main menu modal
+        }
+
+        function closeHistoryModal() {
+            document.getElementById('historyModal').style.display = 'none';
+        }
+
+        function clearHistory() {
+            if (confirm("Are you sure you want to clear all chat history? This cannot be undone.")) {
+                chatHistory = [];
+                localStorage.removeItem('aiChatHistory');
+                showHistory(); // Refresh history list in modal
+                alert("Chat history cleared!");
+            }
+        }
+
+        async function shareApp() {
+            if (navigator.share) {
+                try {
+                    await navigator.share({
+                        title: 'AI Chat App',
+                        text: 'Check out this awesome AI Chat App powered by Google Gemini!',
+                        url: window.location.href // Current URL of the app
+                    });
+                    addMessage('ai', 'Thanks for sharing the app!');
+                } catch (error) {
+                    console.error('Error sharing:', error);
+                    addMessage('ai', 'Sharing failed: ' + error.message);
+                }
+            } else {
+                // Fallback for browsers that don't support Web Share API
+                alert("To share this app, copy the link from your browser's address bar: " + window.location.href);
+                addMessage('ai', "Your browser doesn't support direct sharing. Please copy the link manually.");
+            }
+            toggleMainMenuModal();
+        }
+
+        function downloadApp() {
+            // For a web app, "downloading" typically means adding to home screen (PWA)
+            let message = "This is a web application! You can 'install' it by adding it to your home screen for quick access, just like a native app.\n\n";
+            message += "On Android: Tap the ☰ or ⋮ menu in your browser, then select 'Add to Home screen' or 'Install app'.\n";
+            message += "On iOS/Safari: Tap the Share button (⬆️), then scroll down and select 'Add to Home Screen'.\n\n";
+            message += "For other browsers/platforms, look for an 'Install' or 'Add to Home Screen' option in the browser menu.";
+            
+            alert(message);
+            addMessage('ai', 'For "app download", please use your browser\'s "Add to Home Screen" feature!');
+            toggleMainMenuModal();
+        }
+
+        // Initialize
+        document.getElementById('chatInput').focus();
+    </script>
+</body>
+</html>
